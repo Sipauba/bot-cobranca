@@ -2,6 +2,8 @@
 
 Automação de notificações de cobrança via WhatsApp, construída com n8n. O workflow consulta títulos no Oracle Database, valida telefones com uma API de WhatsApp, mantém o controle operacional no PostgreSQL e envia mensagens em lotes.
 
+![Visão geral do workflow de cobrança no n8n](docs/workflow-overview.png)
+
 > O workflow foi sanitizado para portfólio. Configure novamente todas as credenciais e revise filtros comerciais e endpoints antes de qualquer execução. Os filtros de filial e cobrança no SQL são placeholders ilustrativos.
 
 ## Funcionalidades
