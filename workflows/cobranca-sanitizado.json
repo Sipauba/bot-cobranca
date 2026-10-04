@@ -1,0 +1,1041 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        416
+      ],
+      "id": "0cb7edc3-e5f6-4ce9-bb8c-e6e9af53eccb",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xxxxxxxxxxxxxxxxxxxx/message/sendText/xxxxxxxxxxxxxxxxxxxx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone_normalizado }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1888,
+        624
+      ],
+      "id": "d96d6a4c-e706-4dd3-b6c3-3795303347d3",
+      "name": "Envia mensagem Empresa Exemplo B",
+      "executeOnce": false,
+      "retryOnFail": false,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Campos que você quer normalizar (adicione/remova aqui)\nconst phoneFields = ['TELCELENT']; // ex: ['TELCOB','TELRES','TELCEL']\n\nfunction normalizeBRPhone(value) {\n  if (value === null || value === undefined) return null;\n\n  // só dígitos\n  let d = String(value).replace(/\\D+/g, '');\n\n  // remove prefixos comuns\n  // 0 + DDD... (ex.: 085...) -> remove o 0\n  if (d.length >= 11 && d.startsWith('0')) d = d.replace(/^0+/, '');\n\n  // se vier com 55 na frente\n  if (d.startsWith('55')) d = d.slice(2);\n\n  // agora esperamos: DDD(2) + número(8 ou 9)\n  if (d.length === 10) {\n    // DDD + 8 dígitos -> insere o 9 após o DDD\n    d = d.slice(0, 2) + '9' + d.slice(2);\n  } else if (d.length === 11) {\n    // ok (DDD + 9)\n  } else {\n    // inválido / inesperado\n    return null;\n  }\n\n  // retorna no formato pedido: 55XX999999999\n  return '55' + d;\n}\n\n// --- aplica nos campos ---\nfor (const f of phoneFields) {\n  if (f in $json) {\n    $json[f] = normalizeBRPhone($json[f]);\n  }\n}\n\nreturn $json;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        224
+      ],
+      "id": "a15504ee-50e2-4ddb-b08e-49f32510c9ba",
+      "name": "Normaliza número",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Campos que você quer normalizar (adicione/remova aqui)\nconst phoneFields = ['TELCELENT']; // ex: ['TELCOB','TELRES','TELCEL']\n\nfunction normalizeBRPhone(value) {\n  if (value === null || value === undefined) return null;\n\n  // só dígitos\n  let d = String(value).replace(/\\D+/g, '');\n\n  // remove prefixos comuns\n  // 0 + DDD... (ex.: 085...) -> remove o 0\n  if (d.length >= 11 && d.startsWith('0')) d = d.replace(/^0+/, '');\n\n  // se vier com 55 na frente\n  if (d.startsWith('55')) d = d.slice(2);\n\n  // agora esperamos: DDD(2) + número(8 ou 9)\n  if (d.length === 10) {\n    // DDD + 8 dígitos -> insere o 9 após o DDD\n    d = d.slice(0, 2) + '9' + d.slice(2);\n  } else if (d.length === 11) {\n    // ok (DDD + 9)\n  } else {\n    // inválido / inesperado\n    return null;\n  }\n\n  // retorna no formato pedido: 55XX999999999\n  return '55' + d;\n}\n\n// --- aplica nos campos ---\nfor (const f of phoneFields) {\n  if (f in $json) {\n    $json[f] = normalizeBRPhone($json[f]);\n  }\n}\n\nreturn $json;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        624
+      ],
+      "id": "e26c56c3-b554-4174-b4e6-a374bd03a22d",
+      "name": "Normaliza número 2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xxxxxxxxxxxxxxxxxxxx/chat/whatsappNumbers/cobranca-Empresa Exemplo A",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"numbers\": [\"{{ $json.TELCELENT }}\"]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        224
+      ],
+      "id": "334f25f9-a5d4-4eb6-b413-d8cedbec45a2",
+      "name": "Verifica se tem Whatsapp",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "WhatsApp API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_cobranca (codcli, cliente, telcob, duplic, numvalido, notificado, datanotificado, tipocobranca) \n  VALUES \n  ({{ $('Normaliza número').item.json.CODCLI }},\n  '{{ $('Normaliza número').item.json.CLIENTE }}',\n  {{ $('Normaliza número').item.json.TELCELENT }},\n  {{ $('Normaliza número').item.json.DUPLIC }},\n  TRUE, FALSE, CURRENT_DATE,'D0' )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        896,
+        224
+      ],
+      "id": "14a1a068-f14c-40f0-9bac-6552591d141e",
+      "name": "Salva os números com whats",
+      "notesInFlow": false,
+      "retryOnFail": false,
+      "maxTries": 5,
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM bot_cobranca \n  WHERE numvalido = TRUE\n    AND notificado = FALSE\n    AND datanotificado = CURRENT_DATE\n    AND tipocobranca = 'D0'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1088,
+        224
+      ],
+      "id": "6bda6e52-ca21-4eca-8155-0979bc8f6992",
+      "name": "Seleciona os números válidos",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xxxxxxxxxxxxxxxxxxxx/message/sendText/xxxxxxxxxxxxxxxxxxxx",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone_normalizado }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1888,
+        224
+      ],
+      "id": "df54c64f-91dd-4b74-b54a-f9dec3d65206",
+      "name": "Envia mensagem Empresa Exemplo A",
+      "executeOnce": false,
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "WhatsApp API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xxxxxxxxxxxxxxxxxxxx/chat/whatsappNumbers/glados",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "xxxxxxxxxxxxxxxxxxxx"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"numbers\": [\"{{ $json.TELCELENT }}\"]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        624
+      ],
+      "id": "b8016c4c-88e8-430a-8bae-44191c666f26",
+      "name": "Verifica se tem Whatsapp1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_cobranca (codcli, cliente, telcob, duplic, numvalido, notificado, datanotificado, tipocobranca) \n  VALUES \n  ({{ $('Normaliza número 2').item.json.CODCLI }},\n  '{{ $('Normaliza número 2').item.json.CLIENTE }}',\n  {{ $('Normaliza número 2').item.json.TELCELENT }},\n  {{ $('Normaliza número 2').item.json.DUPLIC }},\n  TRUE, FALSE, CURRENT_DATE,'D0' )",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        896,
+        624
+      ],
+      "id": "82d3c70d-4af1-4fba-8399-31d32ed755c0",
+      "name": "Salva os números com whats1",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM bot_cobranca \n  WHERE numvalido = TRUE\n    AND notificado = FALSE\n    AND datanotificado = CURRENT_DATE\n    AND tipocobranca = 'D0'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1088,
+        624
+      ],
+      "id": "72e87b30-13d4-4c78-95c9-2e019458fb5b",
+      "name": "Seleciona os números válidos1",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node (JavaScript)\n\n// Helpers\nfunction pick(arr) {\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\nfunction moneyBR(value) {\n  // aceita número ou string tipo \"881,14\" / \"881.14\" / \"R$ 881,14\"\n  if (value === null || value === undefined) return \"\";\n  if (typeof value === \"number\") {\n    return value.toLocaleString(\"pt-BR\", { style: \"currency\", currency: \"BRL\" });\n  }\n  const s = String(value).replace(/[^\\d,.-]/g, \"\").trim();\n  if (!s) return \"\";\n  // normaliza: se tem vírgula, assume pt-BR\n  let num = s.includes(\",\") ? Number(s.replace(/\\./g, \"\").replace(\",\", \".\")) : Number(s);\n  if (Number.isFinite(num)) {\n    return num.toLocaleString(\"pt-BR\", { style: \"currency\", currency: \"BRL\" });\n  }\n  return value;\n}\n\n// Normaliza telefone BR para: 55 + DDD + 9 dígitos (ex: xxxxxxxxxxxxxxxxxxxx)\nfunction normalizeBRPhone(value) {\n  if (value === null || value === undefined) return null;\n\n  // só dígitos\n  let d = String(value).replace(/\\D+/g, \"\");\n\n  // remove prefixos comuns\n  // 0 + DDD... (ex.: 085...) -> remove o 0\n  if (d.length >= 11 && d.startsWith(\"0\")) d = d.replace(/^0+/, \"\");\n\n  // se vier com 55 na frente\n  if (d.startsWith(\"55\")) d = d.slice(2);\n\n  // agora esperamos: DDD(2) + número(8 ou 9)\n  if (d.length === 10) {\n    // DDD + 8 dígitos -> insere o 9 após o DDD\n    d = d.slice(0, 2) + \"9\" + d.slice(2);\n  } else if (d.length === 11) {\n    // ok (DDD + 9)\n  } else {\n    // inválido / inesperado\n    return null;\n  }\n\n  // retorna no formato pedido: 55XX999999999\n  return \"55\" + d;\n}\n\n// Modo: Run Once for Each Item -> use $json\nconst item = $json;\n\n// Config\nconst diasAntecedencia = 5;\n\n// Campos\nconst empresa = item.cliente_nome || item.CLIENTE || item.RAZAO || item.empresa || \"seu cadastro\";\nconst duplicata = item.duplicata || item.DUPLIC || item.titulo || \"\";\nconst valor = moneyBR(item.valor || item.VALOR || item.valor_titulo || \"\");\n\n// Pega telefone de vários possíveis campos e normaliza\nconst rawTelefone =\n  item.TELCELENT ||\n  item.telcob ||\n  item.telefone ||\n  item.contato ||\n  item.fone ||\n  null;\n\nconst telefoneNormalizado = normalizeBRPhone(rawTelefone) || normalizeBRPhone(\"xxxxxxxxxxxxxxxxxxxx\");\n\n// 5 blocos, cada um com 5 variações\nconst bloco1 = [\n  \"Olá!\",\n  \"Olá, tudo bem?\",\n  \"Oi!\",\n  \"Bom dia!\",\n  \"Olá! Esperamos que esteja tudo bem.\"\n];\n\nconst bloco2 = [\n  \"Aqui é da Empresa Exemplo A.\",\n  \"Falamos da Empresa Exemplo A.\",\n  \"Aqui é do setor financeiro da Empresa Exemplo A.\",\n  \"Sou da Empresa Exemplo A (contas a receber).\",\n  \"Contato da Empresa Exemplo A — contas a receber.\"\n];\n\nconst bloco3 = [\n  `Entramos em contato com ${empresa} para informar que há um título com vencimento para hoje, no valor de ${valor}, referente à duplicata ${duplicata}.`,\n  `${empresa}, gostaria de informar que identificamos um título com vencimento hoje, no valor de ${valor}, referente à duplicata ${duplicata}.`,\n  `Gostariamos de informar que consta em nosso sistema um título a vencer hoje no valor de ${valor} (duplicata ${duplicata}) em nome de ${empresa}.`,\n  `Estamos entrando em contato para informar que há um título com vencimento hoje, no valor de ${valor}, referente à duplicata ${duplicata} (${empresa}).`,\n  `Gostaríamos de informar que existe um título a vencer hoje, no valor de ${valor}, duplicata ${duplicata}, para ${empresa}.`\n];\n\nconst bloco4 = [\n  \"Caso o pagamento já tenha sido realizado, por favor, desconsidere esta mensagem.\",\n  \"Se você já efetuou o pagamento, pode desconsiderar este aviso.\",\n  \"Se o pagamento já foi feito, por gentileza ignore esta mensagem.\",\n  \"Havendo pagamento já realizado, desconsidere, por favor.\",\n  \"Se já estiver quitado, pedimos que desconsidere esta mensagem.\"\n];\n\nconst bloco5 = [\n  `Para mais informações, nosso contato do contas a receber é xxxxxxxxxxxxxxxxxxxx. Agradecemos a atenção! 🤝`,\n  `Ficamos à disposição. Contas a receber: xxxxxxxxxxxxxxxxxxxx. Obrigado(a)! 🤝`,\n  `Se precisar de ajuda, fale com o contas a receber no xxxxxxxxxxxxxxxxxxxx. Agradecemos! 🤝`,\n  `Dúvidas? Nosso contas a receber atende no xxxxxxxxxxxxxxxxxxxx. Obrigado(a) pela atenção!`,\n  `Qualquer informação adicional, fale com nosso contas a receber: xxxxxxxxxxxxxxxxxxxx. Agradecemos! 🤝`\n];\n\n// Monta a mensagem com escolhas aleatórias\nconst mensagem = [\n  pick(bloco1),\n  \"\",\n  pick(bloco2),\n  \"\",\n  pick(bloco3),\n  \"\",\n  pick(bloco4),\n  \"\",\n  pick(bloco5)\n].join(\"\\n\");\n\n// Run Once for Each Item: retornar 1 objeto JSON (não array)\nreturn {\n  ...item,\n  mensagem,\n  telefone_normalizado: telefoneNormalizado,\n  variacoes_usadas: {\n    bloco1: \"aleatorio\",\n    bloco2: \"aleatorio\",\n    bloco3: \"aleatorio\",\n    bloco4: \"aleatorio\",\n    bloco5: \"aleatorio\"\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        224
+      ],
+      "id": "db450035-5ebe-4f8e-8be1-121dadc33e00",
+      "name": "Gera resposta aleatória",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n Code node (JavaScript)\n\n// Helpers\nfunction pick(arr) {\n  return arr[Math.floor(Math.random() * arr.length)];\n}\n\nfunction moneyBR(value) {\n  // aceita número ou string tipo \"881,14\" / \"881.14\" / \"R$ 881,14\"\n  if (value === null || value === undefined) return \"\";\n  if (typeof value === \"number\") {\n    return value.toLocaleString(\"pt-BR\", { style: \"currency\", currency: \"BRL\" });\n  }\n  const s = String(value).replace(/[^\\d,.-]/g, \"\").trim();\n  if (!s) return \"\";\n  // normaliza: se tem vírgula, assume pt-BR\n  let num = s.includes(\",\") ? Number(s.replace(/\\./g, \"\").replace(\",\", \".\")) : Number(s);\n  if (Number.isFinite(num)) {\n    return num.toLocaleString(\"pt-BR\", { style: \"currency\", currency: \"BRL\" });\n  }\n  return value;\n}\n\n// Normaliza telefone BR para: 55 + DDD + 9 dígitos (ex: xxxxxxxxxxxxxxxxxxxx)\nfunction normalizeBRPhone(value) {\n  if (value === null || value === undefined) return null;\n\n  // só dígitos\n  let d = String(value).replace(/\\D+/g, \"\");\n\n  // remove prefixos comuns\n  // 0 + DDD... (ex.: 085...) -> remove o 0\n  if (d.length >= 11 && d.startsWith(\"0\")) d = d.replace(/^0+/, \"\");\n\n  // se vier com 55 na frente\n  if (d.startsWith(\"55\")) d = d.slice(2);\n\n  // agora esperamos: DDD(2) + número(8 ou 9)\n  if (d.length === 10) {\n    // DDD + 8 dígitos -> insere o 9 após o DDD\n    d = d.slice(0, 2) + \"9\" + d.slice(2);\n  } else if (d.length === 11) {\n    // ok (DDD + 9)\n  } else {\n    // inválido / inesperado\n    return null;\n  }\n\n  // retorna no formato pedido: 55XX999999999\n  return \"55\" + d;\n}\n\n// Modo: Run Once for Each Item -> use $json\nconst item = $json;\n\n// Config\nconst diasAntecedencia = 5;\n\n// Campos\nconst empresa = item.cliente_nome || item.CLIENTE || item.RAZAO || item.empresa || \"seu cadastro\";\nconst duplicata = item.duplicata || item.DUPLIC || item.titulo || \"\";\nconst valor = moneyBR(item.valor || item.VALOR || item.valor_titulo || \"\");\n\n// Pega telefone de vários possíveis campos e normaliza\nconst rawTelefone =\n  item.TELCELENT ||\n  item.telcob ||\n  item.telefone ||\n  item.contato ||\n  item.fone ||\n  null;\n\nconst telefoneNormalizado = normalizeBRPhone(rawTelefone) || normalizeBRPhone(\"xxxxxxxxxxxxxxxxxxxx\");\n\n// 5 blocos, cada um com 5 variações\nconst bloco1 = [\n  \"Olá!\",\n  \"Olá, tudo bem?\",\n  \"Oi!\",\n  \"Bom dia!\",\n  \"Olá! Esperamos que esteja tudo bem.\"\n];\n\nconst bloco2 = [\n  \"Aqui é da SUPER Empresa Exemplo B DISTRIBUIDORA.\",\n  \"Falamos da SUPER Empresa Exemplo B DISTRIBUIDORA.\",\n  \"Aqui é do setor financeiro da SUPER Empresa Exemplo B DISTRIBUIDORA.\",\n  \"Sou da SUPER Empresa Exemplo B DISTRIBUIDORA (contas a receber).\",\n  \"Contato da SUPER Empresa Exemplo B DISTRIBUIDORA — contas a receber.\"\n];\n\nconst bloco3 = [\n  `Entramos em contato com ${empresa} para informar que há um título com vencimento para hoje, no valor de ${valor}, referente à duplicata ${duplicata}.`,\n  `${empresa}, gostaria de informar que identificamos um título com vencimento hoje, no valor de ${valor}, referente à duplicata ${duplicata}.`,\n  `Gostaria de informar que consta em nosso sistema um título a vencer hoje no valor de ${valor} (duplicata ${duplicata}) em nome de ${empresa}.`,\n  `Estamos entrando em contato para informar que há um título com vencimento hoje, no valor de ${valor}, referente à duplicata ${duplicata} (${empresa}).`,\n  `Gostaríamos de informar que existe um título a vencer hoje, no valor de ${valor}, duplicata ${duplicata}, para ${empresa}.`\n];\n\nconst bloco4 = [\n  \"Caso o pagamento já tenha sido realizado, por favor, desconsidere esta mensagem.\",\n  \"Se você já efetuou o pagamento, pode desconsiderar este aviso.\",\n  \"Se o pagamento já foi feito, por gentileza ignore esta mensagem.\",\n  \"Havendo pagamento já realizado, desconsidere, por favor.\",\n  \"Se já estiver quitado, pedimos que desconsidere esta mensagem.\"\n];\n\nconst bloco5 = [\n  `Para mais informações, nosso contato do contas a receber é xxxxxxxxxxxxxxxxxxxx. Agradecemos a atenção! 🤝`,\n  `Ficamos à disposição. Contas a receber: xxxxxxxxxxxxxxxxxxxx. Obrigado(a)! 🤝`,\n  `Se precisar de ajuda, fale com o contas a receber no xxxxxxxxxxxxxxxxxxxx. Agradecemos! 🤝`,\n  `Dúvidas? Nosso contas a receber atende no xxxxxxxxxxxxxxxxxxxx. Obrigado(a) pela atenção!`,\n  `Qualquer informação adicional, fale com nosso contas a receber: xxxxxxxxxxxxxxxxxxxx. Agradecemos! 🤝`\n];\n\n// Monta a mensagem com escolhas aleatórias\nconst mensagem = [\n  pick(bloco1),\n  \"\",\n  pick(bloco2),\n  \"\",\n  pick(bloco3),\n  \"\",\n  pick(bloco4),\n  \"\",\n  pick(bloco5)\n].join(\"\\n\");\n\n// Run Once for Each Item: retornar 1 objeto JSON (não array)\nreturn {\n  ...item,\n  mensagem,\n  telefone_normalizado: telefoneNormalizado,\n  variacoes_usadas: {\n    bloco1: \"aleatorio\",\n    bloco2: \"aleatorio\",\n    bloco3: \"aleatorio\",\n    bloco4: \"aleatorio\",\n    bloco5: \"aleatorio\"\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        624
+      ],
+      "id": "44a7473b-d467-4d15-b317-17dcd5af5ba2",
+      "name": "Gera resposta aleatória1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f8c48dc9-f957-4cfb-a609-82824eebe8b8",
+              "leftValue": "={{ $json.exists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        224
+      ],
+      "id": "bdd35a5f-58f8-4500-9a9f-c50161f3aa14",
+      "name": "Separa os números com whatsapp"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f8c48dc9-f957-4cfb-a609-82824eebe8b8",
+              "leftValue": "={{ $json.exists }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        624
+      ],
+      "id": "31e46484-45c8-4d77-a262-a4a50caca399",
+      "name": "Separa os números com whatsapp1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9ec200a3-f027-4383-8dc9-53b8fc8789ab",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        224
+      ],
+      "id": "77e32720-555f-436e-a372-7829ff50d483",
+      "name": "Caso não haja inadimplência"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "9ec200a3-f027-4383-8dc9-53b8fc8789ab",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        624
+      ],
+      "id": "82d78862-b8a8-4b22-b76f-5e4b0e611b9a",
+      "name": "Caso não haja inadimplência1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_cobranca (codcli, cliente, telcob, duplic, numvalido, notificado, datanotificado, tipocobranca) \nVALUES \n({{ $('Normaliza número').item.json.CODCLI }},\n  '{{ $('Normaliza número').item.json.CLIENTE }}',\n  {{ $('Normaliza número').item.json.TELCELENT }},\n  {{ $('Normaliza número').item.json.DUPLIC }},\n  FALSE, FALSE, CURRENT_DATE,'D0' )\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        688,
+        432
+      ],
+      "id": "5690c941-0c02-4156-b018-136af04017c2",
+      "name": "Salva os números sem Whats",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO bot_cobranca (codcli, cliente, telcob, duplic, numvalido, notificado, datanotificado, tipocobranca) \nVALUES \n({{ $('Normaliza número 2').item.json.CODCLI }},\n  '{{ $('Normaliza número 2').item.json.CLIENTE }}',\n  {{ $('Normaliza número 2').item.json.TELCELENT }},\n  {{ $('Normaliza número 2').item.json.DUPLIC }},\n  FALSE, FALSE, CURRENT_DATE,'D0' )\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        688,
+        832
+      ],
+      "id": "9bf0c4c8-363d-437d-a5ee-80331768ae33",
+      "name": "Salva os números sem Whats1",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE bot_cobranca set notificado = TRUE \n  WHERE numvalido = TRUE\n    AND notificado = FALSE\n    AND datanotificado = CURRENT_DATE\n    AND tipocobranca = 'D0'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2096,
+        224
+      ],
+      "id": "c002e104-fad8-4040-86b4-9a2f1039116f",
+      "name": "Identifica quem foi notificado",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE bot_cobranca set notificado = TRUE \n  WHERE numvalido = TRUE\n    AND notificado = FALSE\n    AND datanotificado = CURRENT_DATE\n    AND tipocobranca = 'D0'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2096,
+        624
+      ],
+      "id": "fa9b1618-0d1b-473a-83f6-5e68502bc54b",
+      "name": "Identifica quem foi notificado1",
+      "credentials": {
+        "postgres": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1696,
+        224
+      ],
+      "id": "7bccd6dd-6b4b-46bf-ab83-411939101f74",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.delay }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2496,
+        224
+      ],
+      "id": "44578420-3e92-4b97-9c5a-b1a369c741a4",
+      "name": "Wait",
+      "webhookId": "xxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1696,
+        624
+      ],
+      "id": "a1e4f27f-xxxxxxxxxxxxxxxxxxxx-fcd5f723183e",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.delay }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2496,
+        624
+      ],
+      "id": "87cbe09d-06c2-4e07-8f91-b4d534a6cd16",
+      "name": "Wait1",
+      "webhookId": "xxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "parameters": {
+        "jsCode": "const delay = Math.floor(Math.random() * (180 - 60 + 1)) + 60;\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    delay\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        224
+      ],
+      "id": "af9ea2b3-26c2-49e2-bb92-6ed034340890",
+      "name": "Delay de 1 a 3 minutos"
+    },
+    {
+      "parameters": {
+        "jsCode": "const delay = Math.floor(Math.random() * (180 - 60 + 1)) + 60;\n\nreturn items.map(item => ({\n  json: {\n    ...item.json,\n    delay\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        624
+      ],
+      "id": "bc88790e-9514-47b9-951d-0e060e4c1fbb",
+      "name": "Delay de 1 a 3 minutos1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://xxxxxxxxxxxxxxxxxxxx/chatpro-opukbs789c/api/v1/send_message",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "xxxxxxxxxxxxxxxxxxxx"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.telefone_normalizado }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $json.mensagem }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1888,
+        896
+      ],
+      "id": "b2872750-e9e7-4c35-84b1-0de07ca64f41",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "execute",
+        "query": "select  p.codcli, c.cliente, c.telcelent, p.valor, p.duplic, p.dtvenc\n    from pcprest p, pcclient c\n    where TRUNC(p.dtvenc) = TRUNC(SYSDATE)\n    and p.codcli = c.codcli\n    and p.dtpag is null\n    and c.telcelent is not null\n-- filtro de teste removido\n    and codfilial not in (0)\n    and p.codcob in ('000')\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.oracleDatabase",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        224
+      ],
+      "id": "a7ddd5d8-5e47-4bbd-a159-0b91bf576efd",
+      "name": "Títulos vencendo hoje Empresa Exemplo A",
+      "credentials": {
+        "oracleDBApi": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "Oracle Database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "execute",
+        "query": "select  p.codcli, c.cliente, c.telcelent, p.valor, p.duplic, p.dtvenc\n    from pcprest p, pcclient c\n    where TRUNC(p.dtvenc) = TRUNC(SYSDATE)\n    and p.codcli = c.codcli\n    and p.dtpag is null\n    and c.telcelent is not null\n-- filtro de teste removido\n    and codfilial in (0)\n    and p.codcob in ('000')\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.oracleDatabase",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        624
+      ],
+      "id": "57bbc0ff-11f5-xxxxxxxxxxxxxxxxxxxx-d4f31cec37d1",
+      "name": "Títulos vencendo  hoje Empresa Exemplo B",
+      "credentials": {
+        "oracleDBApi": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "Oracle Database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "execute",
+        "query": "select  p.codcli, c.cliente, c.telcelent, p.valor, p.duplic, p.dtvenc\n    from pcprest p, pcclient c\n    where TRUNC(p.dtvenc) = TRUNC(SYSDATE)\n    and p.codcli = c.codcli\n    and p.dtpag is null\n    and c.telcelent is not null\n-- filtro de teste removido\n    and codfilial not in (0)\n    and duplic in ({{ $json.duplic }})\n    and p.codcob in ('000')\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.oracleDatabase",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        224
+      ],
+      "id": "59865fc5-25dc-4cf8-b78f-ad419b8e3d3b",
+      "name": "Apenas títulos de números válidos",
+      "credentials": {
+        "oracleDBApi": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "Oracle Database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "execute",
+        "query": "select  p.codcli, c.cliente, c.telcelent, p.valor, p.duplic, p.dtvenc\n    from pcprest p, pcclient c\n    where TRUNC(p.dtvenc) = TRUNC(SYSDATE)\n    and p.codcli = c.codcli\n    and p.dtpag is null\n    and c.telcelent is not null\n-- filtro de teste removido\n    and codfilial in (0)\n    and duplic in ({{ $json.duplic }})\n    and p.codcob in ('000')\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.oracleDatabase",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        624
+      ],
+      "id": "f784c436-a076-4e7d-8b8e-6f06a68313ad",
+      "name": "Apenas títulos de números válidos1",
+      "credentials": {
+        "oracleDBApi": {
+          "id": "xxxxxxxxxxxxxxxxxxxx",
+          "name": "Oracle Database"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "Normaliza número": {
+      "main": [
+        [
+          {
+            "node": "Verifica se tem Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normaliza número 2": {
+      "main": [
+        [
+          {
+            "node": "Verifica se tem Whatsapp1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica se tem Whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Separa os números com whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salva os números com whats": {
+      "main": [
+        [
+          {
+            "node": "Seleciona os números válidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleciona os números válidos": {
+      "main": [
+        [
+          {
+            "node": "Apenas títulos de números válidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envia mensagem Empresa Exemplo A": {
+      "main": [
+        [
+          {
+            "node": "Identifica quem foi notificado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica se tem Whatsapp1": {
+      "main": [
+        [
+          {
+            "node": "Separa os números com whatsapp1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salva os números com whats1": {
+      "main": [
+        [
+          {
+            "node": "Seleciona os números válidos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleciona os números válidos1": {
+      "main": [
+        [
+          {
+            "node": "Apenas títulos de números válidos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera resposta aleatória": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gera resposta aleatória1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separa os números com whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Caso não haja inadimplência",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salva os números sem Whats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separa os números com whatsapp1": {
+      "main": [
+        [
+          {
+            "node": "Caso não haja inadimplência1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salva os números sem Whats1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caso não haja inadimplência": {
+      "main": [
+        [
+          {
+            "node": "Salva os números com whats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caso não haja inadimplência1": {
+      "main": [
+        [
+          {
+            "node": "Salva os números com whats1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identifica quem foi notificado": {
+      "main": [
+        [
+          {
+            "node": "Delay de 1 a 3 minutos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identifica quem foi notificado1": {
+      "main": [
+        [
+          {
+            "node": "Delay de 1 a 3 minutos1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Envia mensagem Empresa Exemplo A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delay de 1 a 3 minutos": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delay de 1 a 3 minutos1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Identifica quem foi notificado1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Títulos vencendo hoje Empresa Exemplo A": {
+      "main": [
+        [
+          {
+            "node": "Normaliza número",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apenas títulos de números válidos": {
+      "main": [
+        [
+          {
+            "node": "Gera resposta aleatória",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apenas títulos de números válidos1": {
+      "main": [
+        [
+          {
+            "node": "Gera resposta aleatória1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "xxxxxxxxxxxxxxxxxxxx"
+  }
+}

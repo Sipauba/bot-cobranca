@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+
+secrets/
+credentials/
+
+*.key
+*.pem
+*.p12
+
+*.bak
+*.backup
+*.dump
+*.sql.gz
+
+.idea/
+.vscode/
+
+.DS_Store
+Thumbs.db
+
+# Local workflow screenshots may expose endpoint labels or customer data.
+Captura_de_tela_*.png
